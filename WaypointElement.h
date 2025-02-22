@@ -16,6 +16,7 @@ public:
 	Text coordsText;
 	ImgButton removeBtn;
 	ImgButton editBtn;
+	ImgButton lookAtBtn;
 
 	WaypointElement();
 

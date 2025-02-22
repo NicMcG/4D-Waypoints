@@ -13,6 +13,7 @@ WaypointElement::WaypointElement()
 	
 	removeBtn = ImgButton("assets/remove.png", 32, 32, 0, 0);
 	editBtn = ImgButton("assets/edit.png", 32, 32, 0, 0);
+	lookAtBtn = ImgButton("assets/lookat.png", 32, 32, 0, 0);
 
 	height = 32;
 }
@@ -36,12 +37,17 @@ void WaypointElement::render(Window* w)
 	editBtn.xOffset = xOffset + width - 64 - 4;
 	editBtn.yOffset = yOffset;
 	editBtn.render(w);
+	
+	lookAtBtn.xOffset = xOffset + width - 96 - 8;
+	lookAtBtn.yOffset = yOffset;
+	lookAtBtn.render(w);
 }
 
 bool WaypointElement::mouseButtonInput(const Window* w, int button, int action, int mods)
 {
 	if (removeBtn.mouseButtonInput(w, button, action, mods)) return true;
 	if (editBtn.mouseButtonInput(w, button, action, mods)) return true;
+	if (lookAtBtn.mouseButtonInput(w, button, action, mods)) return true;
 
 	return Button::mouseButtonInput(w, button, action, mods);
 }

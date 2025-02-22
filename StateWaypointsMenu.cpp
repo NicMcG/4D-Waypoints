@@ -14,6 +14,81 @@ void StateWaypointsMenu::saveWaypoints()
     waypointsFile << waypoints.dump(4);
     waypointsFile.close();
 }
+void StateWaypointsMenu::lookAtWaypointCallback(void* user) {
+    WaypointElement* wpEl = (WaypointElement*)user;
+    Player& player = StateGame::instanceObj->player;
+    glm::vec4 waypointPos = wpEl->it->position;
+
+    // Calculate direction to waypoint
+    glm::vec4 direction = waypointPos - player.cameraPos;
+    float dist = glm::length(direction);
+
+    // If we're too close to the waypoint, don't rotate
+    if (dist < 0.0001f) return;
+
+    direction = glm::normalize(direction);
+
+    // Check if current forward direction is already very close to target
+    float dot = glm::dot(player.forward, direction);
+    if (dot > 0.9999f) return;
+
+    // Project onto XZ plane first
+    glm::vec4 directionXZ = direction;
+    directionXZ.y = 0;
+    directionXZ.w = 0;
+    float lenXZ = glm::length(directionXZ);
+
+    // Project current forward onto XZ plane
+    glm::vec4 forwardXZ = player.forward;
+    forwardXZ.y = 0;
+    forwardXZ.w = 0;
+    float lenForwardXZ = glm::length(forwardXZ);
+
+    // Only do XZ rotation if we have a meaningful XZ component
+    if (lenXZ > 0.001f && lenForwardXZ > 0.001f) {
+        directionXZ = glm::normalize(directionXZ);
+        forwardXZ = glm::normalize(forwardXZ);
+
+        m4::Rotor r1(forwardXZ, directionXZ);
+        m4::Mat5 rot1(r1);
+        player.orientation = rot1 * player.orientation;
+        player.updateAllComponentVectors();
+    }
+
+    // Then handle W rotation
+    glm::vec4 currentDir = player.forward;
+    glm::vec4 targetDirW = direction;
+    targetDirW.y = currentDir.y; // Preserve Y component for now
+
+    dot = glm::dot(currentDir, targetDirW);
+    if (dot < 0.9999f) {
+        m4::Rotor r2(currentDir, targetDirW);
+        m4::Mat5 rot2(r2);
+        player.orientation = rot2 * player.orientation;
+        player.updateAllComponentVectors();
+    }
+
+    // Finally Y rotation
+    dot = glm::dot(player.forward, direction);
+    if (dot < 0.9999f) {
+        m4::Rotor r3(player.forward, direction);
+        m4::Mat5 rot3(r3);
+        player.orientation = rot3 * player.orientation;
+        player.updateAllComponentVectors();
+    }
+    // Store the current chunk position
+    glm::vec4 oldChunkPos = player.lastChunkPos;
+
+    // Force chunk position update to trigger chunk loading
+    player.lastChunkPos = player.pos;
+    player.lastChunkUpdateTime = 0.0;  // Force update
+    player.hyperplaneUpdateFlag = true;
+
+    // Update render frustum to match new camera orientation
+    StateGame::instanceObj->world->updateRenderFrustum(StateGame::instanceObj->projection3D);
+
+    closeBtnCallback(instanceObj.closeBtn.user);
+}
 
 void StateWaypointsMenu::closeBtnCallback(void* user)
 {
@@ -456,10 +531,11 @@ void StateWaypointsMenu::createWaypointElems()
         wpEl->nameText.setText(it->name);
         wpEl->it = it;
 
-        wpEl->removeBtn.user = wpEl->editBtn.user = wpEl;
+        wpEl->removeBtn.user = wpEl->editBtn.user = wpEl->lookAtBtn.user = wpEl;
 
         wpEl->removeBtn.callback = removeWaypointCallback;
         wpEl->editBtn.callback = openCreateWaypointMenu;
+        wpEl->lookAtBtn.callback = lookAtWaypointCallback;
 
         wpEl->offsetX(8);
         wpEl->offsetY(8 + i * 40);

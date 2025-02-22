@@ -102,6 +102,7 @@ public:
 
     StateWaypointsMenu() {}
 
+    static void lookAtWaypointCallback(void* user);
     static void closeBtnCallback(void* user);
     static void cancelBtnCallback(void* user);
     static void openCreateWaypointMenu(void* user);
