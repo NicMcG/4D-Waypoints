@@ -57,7 +57,80 @@ void openWaypointsMenuBind(GLFWwindow* window, int action, int mods)
     if(action == GLFW_PRESS)
         openWaypoints(nullptr);
 }
+inline void renderWaypointToCompass(const glm::mat4& mat, glm::vec4 direction) {
+    // Create the 5x5 matrix for the waypoint
+    m4::Mat5 waypointMatrix;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            waypointMatrix[i][j] = mat[i][j];
+        }
+    }
+    // Move to waypoint to the hand
+    waypointMatrix.translate(glm::vec4{mat[3][0], mat[3][1], mat[3][2], 0}); //not exactly sure why this works
+    Item* itemInMainHand = (StateGame::instanceObj->player.hotbar.getSlot(StateGame::instanceObj->player.hotbar.selectedIndex))->get();
+    bool isMainHand = !((itemInMainHand == nullptr || itemInMainHand->getName() != "Compass"));
+    if (!isMainHand)
+        waypointMatrix.translate(glm::vec4{-0.1f, 0, 0, 0});
+    waypointMatrix.translate(glm::vec4{0.05, 0.1, 0, 0}); // move to the center of the compass
 
+    m4::Rotor rotor5 = m4::Rotor({m4::wedge({1, 0, 0, 0}, {0, 1, 0, 0}),0.1f}); //Rotate downwards towards hand
+    waypointMatrix *= rotor5;
+
+    if (!isMainHand)
+        waypointMatrix *= m4::Rotor({m4::wedge({1, 0, 0, 0}, {0, 0, 1, 0}),-2*0.575f});
+
+    //These rotors adjust for the rotation of the compass in hand
+    glm::vec2 rot3d = *(fdm::CompassRenderer::rotation3D);
+    m4::Rotor rotor1 = m4::Rotor({m4::wedge({1, 0, 0, 0}, {0, 0, 1, 0}),float(rot3d[0])+0.575f});
+    m4::Rotor rotor3 = m4::Rotor({m4::wedge({1, 0, 0, 0}, {0, 0, 1, 0}),0.575f});
+    glm::vec4 test = rotor3.rotate(glm::vec4{0,0,1,0});
+    m4::Rotor rotor2 = m4::Rotor({m4::wedge({test[0], 0, test[2], 0}, {0, 1, 0, 0}),float(rot3d[1])+0.275f});
+    waypointMatrix *= rotor2;
+    waypointMatrix *= rotor1;
+
+    float s = 0.0005f; //scale down the waypoint
+    waypointMatrix.scale(glm::vec4(s, s, s, s));
+
+
+
+
+    // move the waypoint towards it's direction
+    direction *= 0.005/s;
+    waypointMatrix.translate(direction);
+
+    // Center the model
+    waypointMatrix.translate(glm::vec4{-0.5f, -0.5f, -0.5f, -0.5f});
+
+
+    //render the waypoint as a rock
+    const Shader* rockShader = ShaderManager::get("projectileShader");
+    glm::vec4 lightDir = {0.5f, 1.0f, 0.5f, 0.0f};
+    rockShader->use();
+    glUniform4fv(glGetUniformLocation(rockShader->id(), "lightDir"), 1, &lightDir.x);
+    glUniform4f(glGetUniformLocation(rockShader->id(), "inColor"), 1.f, 1.f, 1.f, 1);
+    glUniform1fv(glGetUniformLocation(rockShader->id(), "MV"), sizeof(waypointMatrix) / sizeof(float), &waypointMatrix[0][0]);
+    ItemMaterial::rockRenderer->render();
+}
+$hookStatic(void, CompassRenderer, renderHand, const glm::mat4& mat) {
+    if (!StateWaypointsMenu::showWaypoints) {
+        original(mat);
+        return;
+    }
+    original(mat);
+    Player& player = StateGame::instanceObj->player;
+    for (auto& waypoint : StateWaypointsMenu::waypoints[StateWaypointsMenu::curWorld]) {
+        // Calculate direction vector from player to waypoint (ignoring Y-axis)
+        glm::vec4 direction = waypoint.position - player.cameraPos;
+        direction.y = 0;
+        float distance = glm::length(direction);
+        direction = glm::normalize(direction);
+        direction[2] = direction[2];
+        direction[1] = direction[3];
+        direction[3] = 0;
+        direction *= 10*(1-glm::exp(-0.1f*distance)); //smoothly move to the edge of the compass, as you move far away
+        renderWaypointToCompass(mat, direction);
+    }
+}
 $hook(void, StateGame, render, StateManager& s)
 {
 	original(self, s);
