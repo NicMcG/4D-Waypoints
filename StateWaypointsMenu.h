@@ -12,8 +12,9 @@ struct Waypoint
 {
     std::string name;
     glm::vec4 position;
+    glm::vec3 color;
 
-    Waypoint(const std::string& name = "", const glm::vec4& position = { 0,0,0,0 }) : name(name), position(position) {}
+    Waypoint(const std::string& name = "", const glm::vec4& position = {0,0,0,0}, const glm::vec3& color = {0,0,0}) : name(name), position(position), color(color) {}
 };
 
 inline static void to_json(nlohmann::json& j, const Waypoint& wp)
@@ -21,7 +22,8 @@ inline static void to_json(nlohmann::json& j, const Waypoint& wp)
     j = nlohmann::json
     {
         {"name", wp.name},
-        {"position", {wp.position.x, wp.position.y, wp.position.z, wp.position.w}}
+        {"position", {wp.position.x, wp.position.y, wp.position.z, wp.position.w}},
+        {"color", {wp.color.r*255.0f, wp.color.g*255.0f, wp.color.b*255.0f}}
     };
 }
 inline static void from_json(const nlohmann::json& j, Waypoint& wp)
@@ -32,6 +34,10 @@ inline static void from_json(const nlohmann::json& j, Waypoint& wp)
     wp.position.y = position.at(1).get<float>();
     wp.position.z = position.at(2).get<float>();
     wp.position.w = position.at(3).get<float>();
+    auto color = j.at("color");
+    wp.color.r = color.at(0).get<float>()/255.0f;
+    wp.color.g = color.at(1).get<float>()/255.0f;
+    wp.color.b = color.at(2).get<float>()/255.0f;
 }
 inline static void to_json(nlohmann::json& j, const std::vector<Waypoint>& waypoints)
 {
@@ -96,6 +102,13 @@ public:
     NumberInput zInput;
     Text wTitle;
     NumberInput wInput;
+
+    Text rTitle;
+    NumberInput rInput;
+    Text gTitle;
+    NumberInput gInput;
+    Text bTitle;
+    NumberInput bInput;
 
     Button createBtn;
     Button cancelBtn;

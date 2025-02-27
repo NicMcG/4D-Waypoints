@@ -14,6 +14,7 @@ public:
 	std::vector<Waypoint>::iterator it;
 	Text nameText;
 	Text coordsText;
+	Text colorText;
 	ImgButton removeBtn;
 	ImgButton editBtn;
 

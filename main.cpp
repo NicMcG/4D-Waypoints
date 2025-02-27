@@ -57,7 +57,7 @@ void openWaypointsMenuBind(GLFWwindow* window, int action, int mods)
     if(action == GLFW_PRESS)
         openWaypoints(nullptr);
 }
-inline void renderWaypointToCompass(const glm::mat4& mat, glm::vec4 direction) {
+inline void renderWaypointToCompass(const glm::mat4& mat, glm::vec4 direction, glm::vec3 color) {
     // Create the 5x5 matrix for the waypoint
     m4::Mat5 waypointMatrix;
     for (int i = 0; i < 4; i++) {
@@ -107,7 +107,7 @@ inline void renderWaypointToCompass(const glm::mat4& mat, glm::vec4 direction) {
     glm::vec4 lightDir = {0.5f, 1.0f, 0.5f, 0.0f};
     rockShader->use();
     glUniform4fv(glGetUniformLocation(rockShader->id(), "lightDir"), 1, &lightDir.x);
-    glUniform4f(glGetUniformLocation(rockShader->id(), "inColor"), 1.f, 1.f, 1.f, 1);
+    glUniform4f(glGetUniformLocation(rockShader->id(), "inColor"), color.r, color.g, color.b, 1);
     glUniform1fv(glGetUniformLocation(rockShader->id(), "MV"), sizeof(waypointMatrix) / sizeof(float), &waypointMatrix[0][0]);
     ItemMaterial::rockRenderer->render();
 }
@@ -128,7 +128,7 @@ $hookStatic(void, CompassRenderer, renderHand, const glm::mat4& mat) {
         direction[1] = direction[3];
         direction[3] = 0;
         direction *= 10*(1-glm::exp(-0.1f*distance)); //smoothly move to the edge of the compass, as you move far away
-        renderWaypointToCompass(mat, direction);
+        renderWaypointToCompass(mat, direction, waypoint.color);
     }
 }
 $hook(void, StateGame, render, StateManager& s)

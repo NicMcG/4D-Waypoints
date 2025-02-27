@@ -63,6 +63,9 @@ void StateWaypointsMenu::createWaypointCallback(void* user)
         StateWaypointsMenu::instanceObj.editIterator->position.y = StateWaypointsMenu::instanceObj.yInput.getFloat();
         StateWaypointsMenu::instanceObj.editIterator->position.z = StateWaypointsMenu::instanceObj.zInput.getFloat();
         StateWaypointsMenu::instanceObj.editIterator->position.w = StateWaypointsMenu::instanceObj.wInput.getFloat();
+        StateWaypointsMenu::instanceObj.editIterator->color.r = StateWaypointsMenu::instanceObj.rInput.getFloat()/255.0f;
+        StateWaypointsMenu::instanceObj.editIterator->color.g = StateWaypointsMenu::instanceObj.gInput.getFloat()/255.0f;
+        StateWaypointsMenu::instanceObj.editIterator->color.b = StateWaypointsMenu::instanceObj.bInput.getFloat()/255.0f;
         StateWaypointsMenu::instanceObj.editIterator->name = StateWaypointsMenu::instanceObj.nameInput.text;
     }
     else
@@ -73,6 +76,9 @@ void StateWaypointsMenu::createWaypointCallback(void* user)
         newWP.position.y = StateWaypointsMenu::instanceObj.yInput.getFloat();
         newWP.position.z = StateWaypointsMenu::instanceObj.zInput.getFloat();
         newWP.position.w = StateWaypointsMenu::instanceObj.wInput.getFloat();
+        newWP.color.r = StateWaypointsMenu::instanceObj.rInput.getFloat();
+        newWP.color.g = StateWaypointsMenu::instanceObj.gInput.getFloat();
+        newWP.color.b = StateWaypointsMenu::instanceObj.bInput.getFloat();
         newWP.name = StateWaypointsMenu::instanceObj.nameInput.text;
 
         waypoints[curWorld].push_back(newWP);
@@ -97,6 +103,9 @@ void StateWaypointsMenu::openCreateWaypointMenu(void* user)
         StateWaypointsMenu::instanceObj.yInput.text = std::format("{:.1f}", StateWaypointsMenu::instanceObj.editIterator->position.y);
         StateWaypointsMenu::instanceObj.zInput.text = std::format("{:.1f}", StateWaypointsMenu::instanceObj.editIterator->position.z);
         StateWaypointsMenu::instanceObj.wInput.text = std::format("{:.1f}", StateWaypointsMenu::instanceObj.editIterator->position.w);
+        StateWaypointsMenu::instanceObj.rInput.text = std::format("{:.1f}", StateWaypointsMenu::instanceObj.editIterator->color.r*255.0f);
+        StateWaypointsMenu::instanceObj.gInput.text = std::format("{:.1f}", StateWaypointsMenu::instanceObj.editIterator->color.g*255.0f);
+        StateWaypointsMenu::instanceObj.bInput.text = std::format("{:.1f}", StateWaypointsMenu::instanceObj.editIterator->color.b*255.0f);
         StateWaypointsMenu::instanceObj.nameInput.text = StateWaypointsMenu::instanceObj.editIterator->name;
     }
     else
@@ -107,6 +116,10 @@ void StateWaypointsMenu::openCreateWaypointMenu(void* user)
         StateWaypointsMenu::instanceObj.yInput.text = std::format("{:.1f}", StateGame::instanceObj->player.pos.y);
         StateWaypointsMenu::instanceObj.zInput.text = std::format("{:.1f}", StateGame::instanceObj->player.pos.z);
         StateWaypointsMenu::instanceObj.wInput.text = std::format("{:.1f}", StateGame::instanceObj->player.pos.w);
+        //USE RANDOM NUMBERSSSSSSSSSSS
+        StateWaypointsMenu::instanceObj.rInput.text = std::format("{:.1f}", 255.0f);
+        StateWaypointsMenu::instanceObj.gInput.text = std::format("{:.1f}", 255.0f);
+        StateWaypointsMenu::instanceObj.bInput.text = std::format("{:.1f}", 255.0f);
         StateWaypointsMenu::instanceObj.nameInput.text = "";
     }
 }
@@ -220,14 +233,14 @@ void StateWaypointsMenu::init(StateManager& s)
         createBox.alignY(ALIGN_CENTER_Y);
         createBox.scrollStep = 32;
         createBox.width = 400;
-        createBox.height = 320;
+        createBox.height = 470;
         createBox.parent = &createUI;
         createUI.addElement(&createBox);
 
         windowTitle = Text{};
         windowTitle.alignX(ALIGN_CENTER_X);
         windowTitle.alignY(ALIGN_CENTER_Y);
-        windowTitle.offsetY(-320 / 2 - 20);
+        windowTitle.offsetY(-470 / 2 - 20);
         windowTitle.size = 2;
         windowTitle.shadow = true;
         windowTitle.setText("Waypoint Creation");
@@ -315,13 +328,64 @@ void StateWaypointsMenu::init(StateManager& s)
         wInput.text = std::format("{:.1f}", StateGame::instanceObj->player.pos.w);
         createBox.addElement(&wInput);
 
+        rTitle = Text{};
+        rTitle.alignX(ALIGN_CENTER_X);
+        rTitle.shadow = true;
+        rTitle.size = 2;
+        rTitle.setText("R:");
+        rTitle.offsetX(-150 / 2 - 24);
+        rTitle.offsetY(310);
+        createBox.addElement(&rTitle);
+
+        rInput = NumberInput(true);
+        rInput.alignX(ALIGN_CENTER_X);
+        rInput.offsetY(300);
+        rInput.minValue = -1000000;
+        rInput.maxValue = 1000000;
+        rInput.text = std::format("{:.1f}", StateGame::instanceObj->player.pos.x);
+        createBox.addElement(&rInput);
+
+        gTitle = Text{};
+        gTitle.alignX(ALIGN_CENTER_X);
+        gTitle.shadow = true;
+        gTitle.size = 2;
+        gTitle.setText("G:");
+        gTitle.offsetX(-150 / 2 - 24);
+        gTitle.offsetY(360);
+        createBox.addElement(&gTitle);
+
+        gInput = NumberInput(true);
+        gInput.alignX(ALIGN_CENTER_X);
+        gInput.offsetY(350);
+        gInput.minValue = -1000000;
+        gInput.maxValue = 1000000;
+        gInput.text = std::format("{:.1f}", StateGame::instanceObj->player.pos.y);
+        createBox.addElement(&gInput);
+
+        bTitle = Text{};
+        bTitle.alignX(ALIGN_CENTER_X);
+        bTitle.shadow = true;
+        bTitle.size = 2;
+        bTitle.setText("B:");
+        bTitle.offsetX(-150 / 2 - 24);
+        bTitle.offsetY(410);
+        createBox.addElement(&bTitle);
+
+        bInput = NumberInput(true);
+        bInput.alignX(ALIGN_CENTER_X);
+        bInput.offsetY(400);
+        bInput.minValue = -1000000;
+        bInput.maxValue = 1000000;
+        bInput.text = std::format("{:.1f}", StateGame::instanceObj->player.pos.z);
+        createBox.addElement(&bInput);
+
         createBtn = Button{};
         createBtn.text = "Create";
         createBtn.width = 175;
         createBtn.height = 40;
         createBtn.alignX(ALIGN_CENTER_X);
         createBtn.alignY(ALIGN_CENTER_Y);
-        createBtn.offsetY(320 / 2 + 25);
+        createBtn.offsetY(470 / 2 + 25);
         createBtn.offsetX(-400 / 2 + createBtn.width / 2 + 10);
         createBtn.callback = createWaypointCallback;
         createUI.addElement(&createBtn);
@@ -332,7 +396,7 @@ void StateWaypointsMenu::init(StateManager& s)
         cancelBtn.height = 40;
         cancelBtn.alignX(ALIGN_CENTER_X);
         cancelBtn.alignY(ALIGN_CENTER_Y);
-        cancelBtn.offsetY(320 / 2 + 25);
+        cancelBtn.offsetY(470 / 2 + 25);
         cancelBtn.offsetX(400 / 2 - cancelBtn.width / 2 - 10);
         cancelBtn.callback = cancelBtnCallback;
         createUI.addElement(&cancelBtn);
